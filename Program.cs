@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace firstCompilerProject;
+namespace CSLox;
     
-public class Program
+public class CSLox
 {
     // cslox interpreter implementation
     // Implementation following craftinginterpreters.com from @Robert Nystrom
@@ -39,7 +39,7 @@ public class Program
 
     private static void RunFile(string path)
     {
-        Run(File.ReadAllText(path, Encoding.UTF8));
+        Run(File.ReadAllText(path, Encoding.UTF8)); //Need to figure out if "ReadAllText" is fine (does it return white space??)
     }
 
     private static void RunPrompt()

@@ -1,4 +1,4 @@
-namespace firstCompilerProject;
+namespace CSLox;
 
 enum TokenType
 {
