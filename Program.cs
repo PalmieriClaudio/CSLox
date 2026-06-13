@@ -23,7 +23,7 @@ public class CSLox
            }
            else if (args.Length == 1)
            {
-               RunFile(args[1]);
+               RunFile(args[0]);
            }
            else
            {
