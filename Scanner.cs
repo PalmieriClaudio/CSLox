@@ -131,7 +131,7 @@ class Scanner
 
        Advance();
 
-       string? value = source[(start + 1)..(current - 1)];
+       string value = source[(start + 1)..(current - 1)];
        AddToken(TokenType.STRING, value);
    }
    
@@ -146,7 +146,7 @@ class Scanner
            while (char.IsDigit(Peek())) Advance();
        }
 
-       AddToken(TokenType.NUMBER, float.Parse(source[start..current]));
+       AddToken(TokenType.NUMBER, double.Parse(source[start..current]));
    }
 
    private bool Match(char expected)
