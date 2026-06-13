@@ -4,7 +4,7 @@ using System.IO;
 using System.Text;
 
 namespace CSLox;
-    
+
 public class CSLox
 {
     // cslox interpreter implementation
@@ -16,19 +16,19 @@ public class CSLox
     {
         try
         {
-           if (args.Length > 1)
-           {
-               Console.WriteLine("Usage: cslox [script]");
-               return 64; // UsageError FreeBSD sysexits
-           }
-           else if (args.Length == 1)
-           {
-               RunFile(args[0]);
-           }
-           else
-           {
-               RunPrompt();
-           }
+            if (args.Length > 1)
+            {
+                Console.WriteLine("Usage: cslox [script]");
+                return 64; // UsageError FreeBSD sysexits
+            }
+            else if (args.Length == 1)
+            {
+                RunFile(args[0]);
+            }
+            else
+            {
+                RunPrompt();
+            }
         }
         catch (IOException)
         {
