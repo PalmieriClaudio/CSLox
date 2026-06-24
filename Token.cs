@@ -1,6 +1,6 @@
 namespace CSLox;
 
-class Token
+public class Token
 {
     readonly TokenType type;
     readonly string lexeme;
