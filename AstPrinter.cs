@@ -4,9 +4,9 @@ namespace CSLox;
 
 public class AstPrinter:Expr.IVisitor<string>
 {
-    public string Print(Expr expr)
+    public string? Print(Expr? expr)
     {
-        return expr.Accept(this);
+        return expr?.Accept(this);
     }
 
     public string VisitBinaryExpr(Expr.Binary expr)
