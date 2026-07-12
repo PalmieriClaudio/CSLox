@@ -1,7 +1,22 @@
+using System;
+
 namespace CSLox;
 
 public class Interpreter:Expr.IVisitor<object?>
 {
+    public void Interpret(Expr expression)
+    {
+        try
+        {
+            object? value = Evaluate(expression);
+            Console.WriteLine(Stringify(value));
+        }
+        catch (RuntimeError error)
+        {
+            CSLox.RuntimeError(error);
+        }
+    }
+
     public object? VisitLiteralExpr(Expr.Literal expr)
     {
         return expr.value;
@@ -16,6 +31,7 @@ public class Interpreter:Expr.IVisitor<object?>
             case TokenType.BANG:
                 return !IsTruthy(right);
             case TokenType.MINUS:
+                CheckNumberOperand(expr.opr, right);
                 return -(double?)right;
         }
 
@@ -29,23 +45,53 @@ public class Interpreter:Expr.IVisitor<object?>
 
     public object? VisitBinaryExpr(Expr.Binary expr)
     {
-        object? left = expr.left;
-        object? right = expr.right;
+        object? left = Evaluate(expr.left);
+        object? right = Evaluate(expr.right);
 
-        return expr.opr.type switch
+        switch (expr.opr.type)
         {
-            TokenType.MINUS => (double?)left - (double?)right,
-            TokenType.SLASH => (double?)left / (double?)right,
-            TokenType.STAR => (double?)left * (double?)right,
-            TokenType.PLUS => left is double l && right is double r ? l+r: (string)left + (string)right,
-            TokenType.GREATER => (double)left > (double)right,
-            TokenType.GREATER_EQUAL => (double)left >= (double)right,
-            TokenType.LESS => (double)left < (double)right,
-            TokenType.LESS_EQUAL => (double)left <= (double)right,
-            TokenType.BANG_EQUAL => !IsEqual(left, right),
-            TokenType.EQUAL_EQUAL => IsEqual(left, right),
-            _ => null,
-        };
+            case TokenType.MINUS:
+                CheckNumberOperands(expr.opr, left, right);
+                return (double?)left - (double?)right;
+            case TokenType.SLASH:
+                CheckNumberOperands(expr.opr, left, right);
+                return (double?)left / (double?)right;
+            case TokenType.STAR:
+                CheckNumberOperands(expr.opr, left, right);
+                return (double?)left * (double?)right;
+            case TokenType.PLUS:
+                return left is double l && right is double r ? l+r: left?.ToString() + right?.ToString();//(string?)left + (string?)right;
+            case TokenType.GREATER:
+                CheckNumberOperands(expr.opr, left, right);
+                return (double?)left > (double?)right;
+            case TokenType.GREATER_EQUAL:
+                CheckNumberOperands(expr.opr, left, right);
+                return (double?)left >= (double?)right;
+            case TokenType.LESS:
+                CheckNumberOperands(expr.opr, left, right);
+                return (double?)left < (double?)right;
+            case TokenType.LESS_EQUAL:
+                CheckNumberOperands(expr.opr, left, right);
+                return (double?)left <= (double?)right;
+            case TokenType.BANG_EQUAL:
+                return !IsEqual(left, right);
+            case TokenType.EQUAL_EQUAL:
+                return IsEqual(left, right);
+            default:
+                return null;
+        }
+    }
+
+    private static void CheckNumberOperand(Token opr, object? operand)
+    {
+        if (operand is double) return;
+        throw new RuntimeError(opr, "Operand must be a number.");
+    }
+
+    private static void CheckNumberOperands(Token opr, object? left, object? right)
+    {
+        if (left is double && right is double) return;
+        throw new RuntimeError(opr, "Operands must be numbers.");
     }
 
     private static bool IsTruthy(object? obj)
@@ -61,6 +107,23 @@ public class Interpreter:Expr.IVisitor<object?>
         if (a == null) return false;
 
         return a.Equals(b);
+    }
+
+    private static string Stringify(object? obj)
+    {
+        if (obj is null) return "nil";
+
+        if (obj is double d)
+        {
+            string text = d.ToString();
+            if (text.EndsWith(".0"))
+            {
+                text = text[..^2];
+            }
+            return text;
+        }
+
+        return obj?.ToString() ?? ""; //Cannot actually be null, just wanted to shut Roslyn up
     }
 
     private object? Evaluate(Expr expr)

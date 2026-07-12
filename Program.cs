@@ -10,7 +10,9 @@ public class CSLox
     // cslox interpreter implementation
     // Implementation following craftinginterpreters.com from @Robert Nystrom
 
+    private static readonly Interpreter interpreter = new Interpreter();
     internal static bool HadError { get; set; }
+    internal static bool HadRuntimeError { get; set; }
 
     static int Main(string[] args)
     {
@@ -23,7 +25,7 @@ public class CSLox
             }
             else if (args.Length == 1)
             {
-                RunFile(args[0]);
+                return RunFile(args[0]);
             }
             else
             {
@@ -37,9 +39,14 @@ public class CSLox
         return 0;
     }
 
-    private static void RunFile(string path)
+    private static int RunFile(string path)
     {
         Run(File.ReadAllText(path, Encoding.UTF8)); //Need to figure out if "ReadAllText" is fine (does it return white space??)
+
+        if (HadError) return 65;
+        if (HadRuntimeError) return 70;
+
+        return 0;
     }
 
     private static void RunPrompt()
@@ -64,7 +71,9 @@ public class CSLox
 
         if (HadError) return;
 
-        Console.WriteLine(new AstPrinter().Print(expression));
+        // Console.WriteLine(new AstPrinter().Print(expression));
+        if (expression is Expr e)
+            interpreter.Interpret(e);
     }
 
     internal static void Error(int line, string message)
@@ -82,6 +91,12 @@ public class CSLox
         {
             Report(token.line, " at '" + token.lexeme + "'", message);
         }
+    }
+
+    internal static void RuntimeError(RuntimeError error)
+    {
+        Console.WriteLine(error.Message + "\n[line " + error.token.line + "]");
+        HadRuntimeError = true;
     }
 
     private static void Report(int line, string where, string message)
