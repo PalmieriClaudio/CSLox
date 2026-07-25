@@ -67,13 +67,14 @@ public class CSLox
         List<Token> tokens = scanner.ScanTokens();
 
         Parser parser = new Parser(tokens);
-        Expr? expression = parser.Parse();
+        //Expr? expression = parser.Parse();
+        List<Stmt> statements = parser.Parse();
 
         if (HadError) return;
 
         // Console.WriteLine(new AstPrinter().Print(expression));
-        if (expression is Expr e)
-            interpreter.Interpret(e);
+        //if (expression is Expr e)
+        interpreter.Interpret(statements);
     }
 
     internal static void Error(int line, string message)

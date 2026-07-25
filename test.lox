@@ -1,1 +1,34 @@
-3 + 3 = 6;
+var a = "global a";
+var b = "global b";
+var c = "global c";
+{
+  var a = "outer a";
+  var b = "outer b";
+  {
+    var a = "inner a";
+    print a;
+    print b;
+    print c;
+  }
+  print a;
+  print b;
+  print c;
+}
+print a;
+print b;
+print c;
+
+var a = 1;
+{
+    var a = a + 2;
+    print a;
+}
+print a;
+
+var testString;
+testString = "concat " + "strings";
+print testString;
+
+var testConcatNum;
+testConcatNum = "concat " + 3;
+print testConcatNum;

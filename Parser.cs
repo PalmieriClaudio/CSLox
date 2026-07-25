@@ -15,21 +15,104 @@ public class Parser
         this.tokens = tokens;
     }
 
-    internal Expr? Parse()
+    internal List<Stmt> Parse()
     {
-        try
+        List<Stmt> statements = [];
+        while (!IsAtEnd())
         {
-            return Expression();
+            Stmt? stmt = Declaration();
+            if (stmt is Stmt s) statements.Add(s);
         }
-        catch (ParseError)
-        {
-            return null;
-        }
+
+        return statements;
     }
 
     private Expr Expression()
     {
-        return Equality();
+        return Assignment();
+    }
+
+    private Stmt Statement()
+    {
+        if (Match(TokenType.PRINT)) return PrintStatement();
+        if (Match(TokenType.LEFT_BRACE)) return new Stmt.Block(Block());
+
+        return ExpressionStatement();
+    }
+
+    private Stmt? Declaration()
+    {
+        try
+        {
+            if (Match(TokenType.VAR)) return VarDeclaration();
+
+            return Statement();
+        }
+        catch (ParseError)
+        {
+            Syncronize();
+            return null;
+        }
+    }
+
+    private Stmt.Print PrintStatement()
+    {
+        Expr value = Expression();
+        Consume(TokenType.SEMICOLON, "Expect ';' after value.");
+        return new Stmt.Print(value);
+    }
+
+    private List<Stmt> Block()
+    {
+        List<Stmt> statements = [];
+
+        while (!Check(TokenType.RIGHT_BRACE) && !IsAtEnd())
+        {
+            Stmt? stmt = Declaration();
+            if (stmt is Stmt s) statements.Add(s);
+        }
+
+        Consume(TokenType.RIGHT_BRACE, "Expect '}' after block.");
+        return statements;
+    }
+ 
+    private Stmt.Var VarDeclaration()
+    {
+        Token name = Consume(TokenType.IDENTIFIER, "Expect variable name.");
+
+        Expr? initializer = null;
+        if (Match(TokenType.EQUAL)) initializer = Expression();
+
+        Consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.");
+        return new Stmt.Var(name, initializer);
+    }
+
+    private Stmt.Expression ExpressionStatement()
+    {
+        Expr expr = Expression();
+        Consume(TokenType.SEMICOLON, "Expect ';' after expression.");
+        return new Stmt.Expression(expr);
+    }
+    
+    private Expr Assignment()
+    {
+        Expr expr = Equality();
+
+        if (Match(TokenType.EQUAL))
+        {
+            Token equals = Previous();
+            Expr value = Assignment();
+
+            if (expr is Expr.Variable e)
+            {
+                Token name = e.name;
+                return new Expr.Assign(name, value);
+            }
+
+            Error(equals, "Invalid assignment targhet.");
+        }
+
+        return expr;
     }
 
     private Expr Equality()
@@ -109,6 +192,9 @@ public class Parser
         if (Match(TokenType.NUMBER, TokenType.STRING))
             return new Expr.Literal(Previous().literal);
 
+        if (Match(TokenType.IDENTIFIER))
+            return new Expr.Variable(Previous());
+
         if (Match(TokenType.LEFT_PAREN))
         {
             Expr expr = Expression();
@@ -167,7 +253,7 @@ public class Parser
         return tokens[current - 1];
     }
 
-    private ParseError Error(Token token, string message)
+    private static ParseError Error(Token token, string message)
     {
         CSLox.Error(token, message);
         return new ParseError();

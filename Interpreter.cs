@@ -1,15 +1,20 @@
 using System;
+using System.Collections.Generic;
 
 namespace CSLox;
 
-public class Interpreter:Expr.IVisitor<object?>
+public class Interpreter:Expr.IVisitor<object?>, Stmt.IVisitor<object?> // This is different from the book, where they use the Void java type. C# doesn't have that, and I don't like the Unit concept.
 {
-    public void Interpret(Expr expression)
+    private Environment environment = new Environment();
+
+    public void Interpret(List<Stmt> statements)
     {
         try
         {
-            object? value = Evaluate(expression);
-            Console.WriteLine(Stringify(value));
+            foreach (Stmt statement in statements)
+            {
+                Execute(statement);
+            }
         }
         catch (RuntimeError error)
         {
@@ -38,6 +43,11 @@ public class Interpreter:Expr.IVisitor<object?>
         return null;
     }
 
+    public object? VisitVariableExpr(Expr.Variable expr)
+    {
+        return environment.Get(expr.name);
+    }
+
     public object? VisitGroupingExpr(Expr.Grouping expr)
     {
         return Evaluate(expr.expression);
@@ -60,7 +70,7 @@ public class Interpreter:Expr.IVisitor<object?>
                 CheckNumberOperands(expr.opr, left, right);
                 return (double?)left * (double?)right;
             case TokenType.PLUS:
-                return left is double l && right is double r ? l+r: left?.ToString() + right?.ToString();//(string?)left + (string?)right;
+                return left is double l && right is double r ? l+r: left?.ToString() + right?.ToString();
             case TokenType.GREATER:
                 CheckNumberOperands(expr.opr, left, right);
                 return (double?)left > (double?)right;
@@ -123,11 +133,70 @@ public class Interpreter:Expr.IVisitor<object?>
             return text;
         }
 
-        return obj?.ToString() ?? ""; //Cannot actually be null, just wanted to shut Roslyn up
+        return obj?.ToString() ?? "nil"; //Cannot actually be null, just wanted to shut Roslyn up
     }
 
     private object? Evaluate(Expr expr)
     {
         return expr.Accept(this);
+    }
+
+    private void Execute(Stmt stmt)
+    {
+        stmt.Accept(this);
+    }
+
+    private void ExecuteBlock(List<Stmt> statements, Environment environment)
+    {
+        Environment previous = this.environment;
+        try
+        {
+            this.environment = environment;
+
+            foreach (Stmt statement in statements)
+            {
+                Execute(statement);
+            }
+        }
+        finally
+        {
+            this.environment = previous;
+        }
+    }
+
+    public object? VisitBlockStmt(Stmt.Block stmt)
+    {
+        ExecuteBlock(stmt.statements, new Environment(environment));
+        return null;
+    }
+
+    public object? VisitExpressionStmt(Stmt.Expression stmt)
+    {
+        Evaluate(stmt.expression);
+        return null;
+    }
+
+    public object? VisitPrintStmt(Stmt.Print stmt)
+    {
+        object? value = Evaluate(stmt.expression);
+        Console.WriteLine(Stringify(value));
+        return null;
+    }
+
+    public object? VisitVarStmt(Stmt.Var stmt)
+    {
+        object? value = null;
+        if (stmt.initializer is not null)
+            value = Evaluate(stmt.initializer);
+
+        environment.Define(stmt.name.lexeme, value);
+        return null;
+    }
+
+    public object? VisitAssignExpr(Expr.Assign expr)
+    {
+        object? value = Evaluate(expr.value);
+        environment.Assign(expr.name, value);
+        return value;
     }
 }
