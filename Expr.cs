@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace CSLox;
 
 public abstract class Expr
@@ -9,6 +11,7 @@ public abstract class Expr
      T VisitBinaryExpr(Binary expr);
      T VisitGroupingExpr(Grouping expr);
      T VisitLiteralExpr(Literal expr);
+     T VisitLogicalExpr(Logical expr);
      T VisitUnaryExpr(Unary expr);
      T VisitVariableExpr(Variable expr);
  }
@@ -75,6 +78,24 @@ public abstract class Expr
      public override T Accept<T>(IVisitor<T> visitor)
      {
          return visitor.VisitLiteralExpr(this);
+     }
+ }
+ public class Logical:Expr
+ {
+     public readonly Expr left;
+     public readonly Token opr;
+     public readonly Expr right;
+
+     public Logical(Expr left, Token opr, Expr right)
+     {
+         this.left = left;
+         this.opr = opr;
+         this.right = right;
+     }
+
+     public override T Accept<T>(IVisitor<T> visitor)
+     {
+         return visitor.VisitLogicalExpr(this);
      }
  }
  public class Unary:Expr

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+
 namespace CSLox;
 
 public abstract class Stmt
@@ -8,8 +9,10 @@ public abstract class Stmt
  {
      T VisitBlockStmt(Block stmt);
      T VisitExpressionStmt(Expression stmt);
+     T VisitIfStmt(If stmt);
      T VisitPrintStmt(Print stmt);
      T VisitVarStmt(Var stmt);
+     T VisitWhileStmt(While stmt);
  }
 
  public abstract T Accept<T>(IVisitor<T> visitor);
@@ -42,6 +45,24 @@ public abstract class Stmt
          return visitor.VisitExpressionStmt(this);
      }
  }
+ public class If:Stmt
+ {
+     public readonly Expr condition;
+     public readonly Stmt thenBranch;
+     public readonly Stmt? elseBranch;
+
+     public If(Expr condition, Stmt thenBranch, Stmt? elseBranch)
+     {
+         this.condition = condition;
+         this.thenBranch = thenBranch;
+         this.elseBranch = elseBranch;
+     }
+
+     public override T Accept<T>(IVisitor<T> visitor)
+     {
+         return visitor.VisitIfStmt(this);
+     }
+ }
  public class Print:Stmt
  {
      public readonly Expr expression;
@@ -70,6 +91,22 @@ public abstract class Stmt
      public override T Accept<T>(IVisitor<T> visitor)
      {
          return visitor.VisitVarStmt(this);
+     }
+ }
+ public class While:Stmt
+ {
+     public readonly Expr condition;
+     public readonly Stmt body;
+
+     public While(Expr condition, Stmt body)
+     {
+         this.condition = condition;
+         this.body = body;
+     }
+
+     public override T Accept<T>(IVisitor<T> visitor)
+     {
+         return visitor.VisitWhileStmt(this);
      }
  }
 }

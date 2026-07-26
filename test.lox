@@ -1,3 +1,4 @@
+print "----Variables scopes tests----";
 var a = "global a";
 var b = "global b";
 var c = "global c";
@@ -32,3 +33,52 @@ print testString;
 var testConcatNum;
 testConcatNum = "concat " + 3;
 print testConcatNum;
+
+//This is a test comment
+
+// var variable = this shouldn't break
+
+print "----First 21 fibonacci numbers----";
+var a = 0;
+var temp;
+
+for (var b = 1; a < 10000; b = temp + b)
+{
+    print a;
+    temp = a;
+    a = b;
+}
+
+print "----if tests----";
+var fls = false;
+if (fls)
+{
+    print "It was true!";
+}
+else
+{
+    print "it was false!";
+}
+
+print "----Logical operators tests----";
+var testAnd = nil and 4;
+print testAnd;
+
+var testOr = true or "string";
+print testOr;
+
+print nil or "string";
+print nil and 1;
+print nil or 1;
+print nil or "string " + 1;
+
+print "----------ternary Tests---------";
+
+var ternaryTest = true and true or 2;
+print ternaryTest;
+ternaryTest = true and false or 2;
+print ternaryTest;
+ternaryTest = false and true or 2;
+print ternaryTest;
+ternaryTest = false and false or 2;
+print ternaryTest;
