@@ -5,7 +5,14 @@ namespace CSLox;
 
 public class Interpreter:Expr.IVisitor<object?>, Stmt.IVisitor<object?> // This is different from the book, where they use the Void java type. C# doesn't have that, and I don't like the Unit concept.
 {
-    private Environment environment = new Environment();
+    public readonly Environment globals = new Environment();
+    private Environment environment = globals;
+
+    public Interpreter()
+    {
+        globals.Define("clock", new NativeFunction(0, (interpreter, arguments) => 
+            DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000));
+    }
 
     public void Interpret(List<Stmt> statements)
     {
@@ -56,6 +63,27 @@ public class Interpreter:Expr.IVisitor<object?>, Stmt.IVisitor<object?> // This 
         }
 
         return null;
+    }
+
+    public object? VisitCallExpr(Expr.Call expr)
+    {
+        object? callee = Evaluate(expr.callee);
+
+        List<object?> arguments = [];
+        foreach (object? argument in arguments)
+        {
+            if (argument is Expr a)
+                arguments.Add(Evaluate(a));
+        }
+
+        if (callee is not LoxCallable function)
+            throw new RuntimeError(expr.paren, "Can only call functions and classes.");
+        if (arguments.Count != function.Arity())
+        {
+            throw new RuntimeError(expr.paren, $"Expected {function.Arity()} arguments but got {arguments.Count}.");
+        }
+
+        return function.Call(this, arguments);
     }
 
     public object? VisitVariableExpr(Expr.Variable expr)
@@ -161,7 +189,7 @@ public class Interpreter:Expr.IVisitor<object?>, Stmt.IVisitor<object?> // This 
         stmt.Accept(this);
     }
 
-    private void ExecuteBlock(List<Stmt> statements, Environment environment)
+    public void ExecuteBlock(List<Stmt> statements, Environment environment)
     {
         Environment previous = this.environment;
         try
@@ -188,6 +216,13 @@ public class Interpreter:Expr.IVisitor<object?>, Stmt.IVisitor<object?> // This 
     public object? VisitExpressionStmt(Stmt.Expression stmt)
     {
         Evaluate(stmt.expression);
+        return null;
+    }
+
+    public object? VisitFunctionStmt(Stmt.Function stmt)
+    {
+        LoxFunction function = new LoxFunction(stmt);
+        environment.Define(stmt.name.lexeme, function);
         return null;
     }
 

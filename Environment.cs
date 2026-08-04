@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace CSLox;
 
-class Environment
+public class Environment
 {
     internal readonly Environment? enclosing;
     private readonly Dictionary<string, object?> values = [];

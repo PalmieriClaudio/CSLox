@@ -74,7 +74,7 @@ print nil or "string " + 1;
 
 print "----------ternary Tests---------";
 
-var ternaryTest = true and true or 2;
+var ternaryTest = true and "stering" or 2;
 print ternaryTest;
 ternaryTest = true and false or 2;
 print ternaryTest;
