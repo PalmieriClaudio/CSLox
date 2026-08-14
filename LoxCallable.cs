@@ -5,5 +5,5 @@ namespace CSLox;
 interface LoxCallable
 {
     int Arity();
-    object? Call(Interpreter interpreter, List<object> arguments);
+    object? Call(Interpreter interpreter, List<object?> arguments);
 }

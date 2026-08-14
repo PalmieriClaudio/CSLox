@@ -5,21 +5,31 @@ namespace CSLox;
 public class LoxFunction : LoxCallable
 {
     private readonly Stmt.Function declaration;
-    public LoxFunction(Stmt.Function declaration)
+    private readonly Environment closure;
+
+    public LoxFunction(Stmt.Function declaration, Environment closure)
     {
+        this.closure = closure;
         this.declaration = declaration;
     }
 
-    public object? Call(Interpreter interpreter, List<object> arguments)
+    public object? Call(Interpreter interpreter, List<object?> arguments)
     {
-        Environment environment = new Environment(interpreter.globals);
+        Environment environment = new Environment(closure);
 
         for (int i = 0; i < declaration.parameters.Count; i++)
         {
             environment.Define(declaration.parameters[i].lexeme, arguments[i]);
         }
 
-        interpreter.ExecuteBlock(declaration.body, environment);
+        try
+        {
+            interpreter.ExecuteBlock(declaration.body, environment);
+        }
+        catch (Return returnValue)
+        {
+            return returnValue.value;
+        }
         return null;
     }
 

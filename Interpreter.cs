@@ -6,10 +6,11 @@ namespace CSLox;
 public class Interpreter:Expr.IVisitor<object?>, Stmt.IVisitor<object?> // This is different from the book, where they use the Void java type. C# doesn't have that, and I don't like the Unit concept.
 {
     public readonly Environment globals = new Environment();
-    private Environment environment = globals;
+    private Environment environment;
 
     public Interpreter()
     {
+        environment = globals;
         globals.Define("clock", new NativeFunction(0, (interpreter, arguments) => 
             DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000));
     }
@@ -68,16 +69,15 @@ public class Interpreter:Expr.IVisitor<object?>, Stmt.IVisitor<object?> // This 
     public object? VisitCallExpr(Expr.Call expr)
     {
         object? callee = Evaluate(expr.callee);
+        if (callee is not LoxCallable function)
+            throw new RuntimeError(expr.paren, "Can only call functions and classes.");
 
         List<object?> arguments = [];
-        foreach (object? argument in arguments)
+        foreach (object? argument in expr.arguments)
         {
             if (argument is Expr a)
                 arguments.Add(Evaluate(a));
         }
-
-        if (callee is not LoxCallable function)
-            throw new RuntimeError(expr.paren, "Can only call functions and classes.");
         if (arguments.Count != function.Arity())
         {
             throw new RuntimeError(expr.paren, $"Expected {function.Arity()} arguments but got {arguments.Count}.");
@@ -221,7 +221,7 @@ public class Interpreter:Expr.IVisitor<object?>, Stmt.IVisitor<object?> // This 
 
     public object? VisitFunctionStmt(Stmt.Function stmt)
     {
-        LoxFunction function = new LoxFunction(stmt);
+        LoxFunction function = new LoxFunction(stmt, environment);
         environment.Define(stmt.name.lexeme, function);
         return null;
     }
@@ -244,6 +244,14 @@ public class Interpreter:Expr.IVisitor<object?>, Stmt.IVisitor<object?> // This 
         object? value = Evaluate(stmt.expression);
         Console.WriteLine(Stringify(value));
         return null;
+    }
+
+    public object? VisitReturnStmt(Stmt.Return stmt)
+    {
+        object? value = null;
+        if (stmt.value is not null) value = Evaluate(stmt.value);
+
+        throw new Return(value);
     }
 
     public object? VisitVarStmt(Stmt.Var stmt)

@@ -37,6 +37,7 @@ public class Parser
     {
         if (Match(TokenType.IF)) return IfStatement();
         if (Match(TokenType.PRINT)) return PrintStatement();
+        if (Match(TokenType.RETURN)) return ReturnStatement();
         if (Match(TokenType.WHILE)) return WhileStatement();
         if (Match(TokenType.FOR)) return ForStatement();
         if (Match(TokenType.LEFT_BRACE)) return new Stmt.Block(Block());
@@ -131,6 +132,19 @@ public class Parser
         return new Stmt.Print(value);
     }
 
+    private Stmt.Return ReturnStatement()
+    {
+        Token keyword = Previous();
+        Expr? value = null;
+        if (!Check(TokenType.SEMICOLON))
+        {
+            value = Expression();
+        }
+
+        Consume(TokenType.SEMICOLON, "Expect ';' after return value.");
+        return new Stmt.Return(keyword, value);
+    }
+
     private List<Stmt> Block()
     {
         List<Stmt> statements = [];
@@ -182,17 +196,17 @@ public class Parser
         List<Token> parameters = [];
         if (!Check(TokenType.RIGHT_PAREN))
         {
-            while (Match(TokenType.COMMA))
+            do
             {
                 if (parameters.Count >= 255)
                     Error(Peek(), "Can't have more than 255 parameters.");
 
                 parameters.Add(Consume(TokenType.IDENTIFIER, "Expect parameter name."));
-            }
+            } while (Match(TokenType.COMMA));
         }
         Consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.");
 
-        Consume(TokenType.LEFT_BRACE, $"Expect '{{' before {kind} body");
+        Consume(TokenType.LEFT_BRACE, $"Expect '{{' before {kind} body.");
         List<Stmt> body = Block();
         return new Stmt.Function(name, parameters, body);
     }
@@ -319,12 +333,12 @@ public class Parser
         List<Expr> arguments = [];
         if (!Check(TokenType.RIGHT_PAREN))
         {
-            while (Match(TokenType.COMMA))
+            do
             {
                 if (arguments.Count >= 255)
                     Error(Peek(), "Can't have more than 255 arguments.");
                 arguments.Add(Expression());
-            }
+            } while (Match(TokenType.COMMA));
         }
 
         Token paren = Consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments.");
