@@ -7,6 +7,7 @@ public class Interpreter:Expr.IVisitor<object?>, Stmt.IVisitor<object?> // This 
 {
     public readonly Environment globals = new Environment();
     private Environment environment;
+    private readonly Dictionary<Expr, int> locals = [];
 
     public Interpreter()
     {
@@ -88,7 +89,20 @@ public class Interpreter:Expr.IVisitor<object?>, Stmt.IVisitor<object?> // This 
 
     public object? VisitVariableExpr(Expr.Variable expr)
     {
-        return environment.Get(expr.name);
+        return LookUpVariable(expr.name, expr);
+    }
+
+    private object? LookUpVariable(Token name, Expr expr)
+    {
+        int? distance = locals[expr];
+        if (distance is not null)
+        {
+            return environment.GetAt(distance, name.lexeme);
+        }
+        else
+        {
+            return globals.Get(name);
+        }
     }
 
     public object? VisitGroupingExpr(Expr.Grouping expr)
@@ -189,6 +203,11 @@ public class Interpreter:Expr.IVisitor<object?>, Stmt.IVisitor<object?> // This 
         stmt.Accept(this);
     }
 
+    public void Resolve(Expr expr, int depth)
+    {
+        locals.Add(expr, depth);
+    }
+
     public void ExecuteBlock(List<Stmt> statements, Environment environment)
     {
         Environment previous = this.environment;
@@ -277,7 +296,17 @@ public class Interpreter:Expr.IVisitor<object?>, Stmt.IVisitor<object?> // This 
     public object? VisitAssignExpr(Expr.Assign expr)
     {
         object? value = Evaluate(expr.value);
-        environment.Assign(expr.name, value);
+        
+        int? distance = locals[expr];
+        if (distance is not null)
+        {
+            environment.AssignAt(distance, expr.name, value);
+        }
+        else
+        {
+            globals.Assign(expr.name, value);
+        }
+
         return value;
     }
 }

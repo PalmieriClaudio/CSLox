@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace CSLox;
@@ -20,6 +21,27 @@ public class Environment
     internal void Define(string name, object? value)
     {
         values[name] = value;
+    }
+
+    Environment Ancestor(int distance)
+    {
+        Environment environment = this;
+        for (int i = 0; i < distance; i++)
+        {
+            environment = environment.enclosing ?? throw new InvalidOperationException($"No environment found at distance {i}");
+        }
+
+        return environment;
+    }
+
+    public object? GetAt(int distance, string name)
+    {
+        return Ancestor(distance).values[name];
+    }
+
+    public void AssignAt(int distance, Token name, object? value)
+    {
+        Ancestor(distance).values[name.lexeme] = value;
     }
 
     internal object? Get(Token name)
